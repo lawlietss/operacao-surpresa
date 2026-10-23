@@ -224,8 +224,8 @@ window.RITONA_EXP={"phase1:1": "wink", "phase1:2": "smirk", "phase1:3": "mad", "
   const speech=(who,t)=>`<div class="vn-box"><span class="vn-name">${who}</span><span class="vn-text">${t}</span></div>`;
   function vnIntro(k){const L=window.RITONA_VN[k],i=(s().vn||{})[k]||0;if(!L||i>=L.length)return"";setTimeout(()=>window.RitonaVN.after(),0);return `<article class="story-card">${stage()}${vnBox(L[i],k)}</article>`;}
   const intro=(k,f)=>()=>vnIntro(k)||f();
-  function diceView(k,title){const b=bonusOf(k),tot=b.reduce((a,m)=>a+m[1],0);return `${speech("NARRADORA",`Escolha registrada: ${title}. ${diceCfg[k].ask}: role o d20 contra CD ${diceCfg[k].dc}.`)}<div class="dice-wrap"><button type="button" class="dice-num" id="dice-num" data-roll="${k}" aria-label="Lançar o d20">20</button></div><p class="dice-info">TOQUE NO DADO PARA LANÇAR · CD <b>${diceCfg[k].dc}</b>${b.length?` · BÔNUS <b>+${tot}</b> (${b.map(m=>m[2]).join(", ")})`:""}</p>`;}
-  function rollResult(k,title,reply,next,extra){const r=s().rolls[k],b=bonusOf(k).reduce((a,m)=>a+m[1],0),c=diceCfg[k],tot=r+b;const x=r===20?["crit",c.t.crit]:r===1?["fail",c.t.cf]:tot>=c.dc?["",c.t.ok]:["fail",c.t.f];return `<div class="dice-wrap"><div class="dice-num ${x[0]}">${r}</div></div><p class="dice-info">${r}${b?` + ${b}`:""} = <b>${tot}</b> contra CD ${c.dc}</p><div class="result-box"><b>${title}</b><br>${reply}<br><br>${x[1]}</div>${extra||""}<button class="button button-primary button-wide" data-next="${next}">${next==="2"?"IR PARA A SALA":"SE DESPEDIR DE KONOHA"} ↗</button>`;}
+  function diceView(k,title){const b=bonusOf(k),tot=b.reduce((a,m)=>a+m[1],0);setTimeout(()=>window.RitonaD20.mount(),0);return `${speech("NARRADORA",`Escolha registrada: ${title}. ${diceCfg[k].ask}: role o d20 contra CD ${diceCfg[k].dc}.`)}<div class="dice-wrap"><button type="button" class="d20" id="dice-num" data-roll="${k}" aria-label="Lançar o d20"><canvas data-face="20" data-idle="1"></canvas></button></div><p class="dice-info">TOQUE NO DADO PARA LANÇAR · CD <b>${diceCfg[k].dc}</b>${b.length?` · BÔNUS <b>+${tot}</b> (${b.map(m=>m[2]).join(", ")})`:""}</p>`;}
+  function rollResult(k,title,reply,next,extra){const r=s().rolls[k],b=bonusOf(k).reduce((a,m)=>a+m[1],0),c=diceCfg[k],tot=r+b;const x=r===20?["crit",c.t.crit]:r===1?["fail",c.t.cf]:tot>=c.dc?["",c.t.ok]:["fail",c.t.f];setTimeout(()=>window.RitonaD20.mount(),0);return `<div class="dice-wrap"><span class="d20 ${x[0]}" role="img" aria-label="d20 mostrando ${r}"><canvas data-face="${r}" data-tone="${x[0]}"></canvas></span></div><p class="dice-info">${r}${b?` + ${b}`:""} = <b>${tot}</b> contra CD ${c.dc}</p><div class="result-box"><b>${title}</b><br>${reply}<br><br>${x[1]}</div>${extra||""}<button class="button button-primary button-wide" data-next="${next}">${next==="2"?"IR PARA A SALA":"SE DESPEDIR DE KONOHA"} ↗</button>`;}
   function phaseOne(){
     const st=s(),chosen=st.choices.phase1,roll=(st.rolls||{}).phase1,D=window.RitonaDialogue.phaseOne,L=window.RITONA_VN.phase1,i=(st.vn||{}).phase1||0;
     setTimeout(()=>window.RitonaVN.after(),0);
@@ -359,7 +359,7 @@ window.RitonaTouch={
 window.RitonaVN={timer:null,typing:false,rolling:false,
   after(){const im=document.querySelector(".vn-char"),a=document.querySelector(".ritona-access");const vb=document.querySelector(".vn-box[data-vn]");let ex=window.RitonaMood||"smile";if(vb){const kk=vb.dataset.vn,ii=(s().vn||{})[kk]||0;ex=window.RITONA_EXP[kk+":"+ii]||"smile";}if(im)im.src=window.IMG.ri[ex]||window.IMG.ri.smile;const wn=(document.querySelector(".vn-box .vn-name")||{}).textContent,npc=document.querySelector(".vn-npc"),N={SASUKE:["⚡","linear-gradient(160deg,#1b2a5a,#0d1230)"],SAKURA:["🌸","linear-gradient(160deg,#a8416f,#4a1f3a)"],YUZA:["⭐",""]}[wn];if(npc&&im){npc.hidden=!N;im.style.display=N?"none":"";if(N){npc.innerHTML='<img alt="'+wn+'" src="'+(window.IMG.npc[window.IMG.npc[ex]?ex:(wn==="SASUKE"?"sa_neutral":wn==="YUZA"?"yz_smile":"sk_smug")])+'">';npc.style.background="none";}}const el=document.querySelector(".vn-text[data-text]");if(!el)return;const t=el.dataset.text;let n=0;clearInterval(this.timer);this.typing=true;this.timer=setInterval(()=>{n++;el.textContent=t.slice(0,n);if(n>=t.length){clearInterval(this.timer);this.typing=false;}},22);},
   next(k){const el=document.querySelector(".vn-text[data-text]");if(this.typing&&el){clearInterval(this.timer);this.typing=false;el.textContent=el.dataset.text;return;}s().vn=s().vn||{};s().vn[k]=(s().vn[k]||0)+1;window.RitonaState.save();if(k==="phase4"&&s().vn[k]===4){window.RitonaFX.warp("back",render);return;}render();},
-  roll(k){const d=document.getElementById("dice-num");if(!d||this.rolling)return;this.rolling=true;d.classList.add("rolling");d.disabled=true;const step=n=>{d.textContent=1+Math.floor(Math.random()*20);if(n<16){setTimeout(()=>step(n+1),40+n*n*1.3);return;}const r=1+Math.floor(Math.random()*20);d.textContent=r;s().rolls=s().rolls||{};s().rolls[k]=r;if(k==="phase1"&&r===20)add("print");window.RitonaState.save();setTimeout(()=>{this.rolling=false;render();},650);};step(0);}
+  roll(k){const d=document.getElementById("dice-num");if(!d||this.rolling)return;this.rolling=true;d.disabled=true;const r=1+Math.floor(Math.random()*20);window.RitonaD20.roll(d.querySelector("canvas"),r,()=>{s().rolls=s().rolls||{};s().rolls[k]=r;if(k==="phase1"&&r===20)add("print");window.RitonaState.save();setTimeout(()=>{this.rolling=false;render();},650);});}
 };
 window.RitonaMissions={render,goTo,choosePhase1,chooseNaruto,openMemory,finish,slide};
 })();</script>
@@ -524,6 +524,11 @@ h1,h2,.display-title,.hero-glitch{font-family:"Caveat",cursive;letter-spacing:0}
 .story-card .scroll-slide p{font-family:var(--mono);font-size:1.08rem;line-height:1.45;color:var(--ink);margin:0 0 12px}
 .story-card .scroll-slide .scroll-react{margin:0;padding-top:10px;border-top:2px dashed #c9a24d}.scroll-react b{color:var(--pink)}
 .scrolls+.vn-box{margin-top:34px}
+/* d20 em 3D: mesmo contorno de tinta e sombra deslocada dos botões do caderno */
+.d20{display:inline-grid;place-items:center;width:132px;height:132px;padding:0;border:0;background:none;color:inherit}
+.d20 canvas{width:132px;height:132px;filter:drop-shadow(3px 3px 0 var(--ink));transition:transform .15s}
+button.d20{cursor:pointer}button.d20:hover canvas{transform:scale(1.06) rotate(-6deg)}button.d20:disabled{opacity:1;cursor:default}button.d20:disabled canvas{transform:none}
+.d20.crit canvas{filter:drop-shadow(3px 3px 0 var(--ink)) drop-shadow(0 0 14px #f5d18acc)}
 .scroll-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}.scroll-nav span{font:400 1rem var(--mono);color:var(--muted)}.scroll-nav .button{min-width:64px;font-size:1.2rem}
 </style>
 </head>
@@ -676,5 +681,62 @@ h1,h2,.display-title,.hero-glitch{font-family:"Caveat",cursive;letter-spacing:0}
 })();</script>
 <div id="warp" aria-hidden="true"><div class="w-spin"></div><div class="w-glow"></div><div class="w-icons"></div><div class="w-flash"></div><p class="w-text"></p></div>
 <script>window.RitonaFX={busy:false,warp(kind,cb){const w=document.getElementById("warp");if(!w||this.busy||matchMedia("(prefers-reduced-motion:reduce)").matches){cb();return;}this.busy=true;const go=kind==="go",ic=go?["🍃","✨"]:["✨","💜"],h=w.querySelector(".w-icons");h.innerHTML="";for(let i=0;i<8;i++){const e=document.createElement("span");e.textContent=ic[i%ic.length];e.style.setProperty("--a",i*45+"deg");e.style.setProperty("--d",0.3+(i%4)*0.06+"s");h.appendChild(e);}w.querySelector(".w-text").textContent=go?"O selo ativou!":"Voltando pra casa...";w.className="on "+kind;setTimeout(cb,800);setTimeout(()=>{w.className="";this.busy=false;},1850);}};</script>
+<script>/* d20 em 3D: icosaedro desenhado em canvas, com as cores e o contorno de tinta do caderno.
+   Ele só gira até a face sorteada; o sorteio e as regras continuam em RitonaVN.roll e diceCfg. */
+window.RitonaD20=(()=>{
+  const P=(1+Math.sqrt(5))/2,R0=Math.sqrt(1+P*P),INK="#3b2a2f",V=[],F=[];
+  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],norm=a=>{const l=Math.hypot(...a);return a.map(v=>v/l);};
+  for(const p of[1,-1])for(const q of[1,-1])V.push([0,p,q*P],[p,q*P,0],[q*P,0,p]);
+  // faces: trios de vértices a distância 2 (aresta), em sentido anti-horário visto de fora
+  for(let i=0;i<12;i++)for(let j=i+1;j<12;j++)for(let k=j+1;k<12;k++){
+    if([[i,j],[j,k],[i,k]].some(([a,b])=>Math.abs(Math.hypot(...sub(V[a],V[b]))-2)>1e-6))continue;
+    const c=[0,1,2].map(n=>(V[i][n]+V[j][n]+V[k][n])/3),v=dot(cross(sub(V[j],V[i]),sub(V[k],V[i])),c)>0?[i,j,k]:[i,k,j];
+    F.push({v,c:c.map(n=>n/R0),n:norm(c)});
+  }
+  V.forEach((p,i)=>V[i]=p.map(n=>n/R0));
+  F.forEach(f=>f.up=norm(sub(V[f.v[0]],f.c)));
+  // faces opostas somam 21, como num d20 de verdade
+  F.slice().sort((a,b)=>b.n[1]-a.n[1]||b.n[2]-a.n[2]).reduce((next,f)=>{if(f.num)return next;F.find(o=>dot(o.n,f.n)<-.99).num=21-next;f.num=next;return next-1;},20);
+  const qmul=(a,b)=>[a[0]*b[0]-a[1]*b[1]-a[2]*b[2]-a[3]*b[3],a[0]*b[1]+a[1]*b[0]+a[2]*b[3]-a[3]*b[2],a[0]*b[2]-a[1]*b[3]+a[2]*b[0]+a[3]*b[1],a[0]*b[3]+a[1]*b[2]-a[2]*b[1]+a[3]*b[0]];
+  const qaxis=(ax,t)=>{const s=Math.sin(t/2);return[Math.cos(t/2),ax[0]*s,ax[1]*s,ax[2]*s];};
+  const qmat=([w,x,y,z])=>[[1-2*(y*y+z*z),2*(x*y-z*w),2*(x*z+y*w)],[2*(x*y+z*w),1-2*(x*x+z*z),2*(y*z-x*w)],[2*(x*z-y*w),2*(y*z+x*w),1-2*(x*x+y*y)]];
+  const matq=m=>{const t=m[0][0]+m[1][1]+m[2][2];let s;
+    if(t>0){s=Math.sqrt(t+1)*2;return[s/4,(m[2][1]-m[1][2])/s,(m[0][2]-m[2][0])/s,(m[1][0]-m[0][1])/s];}
+    if(m[0][0]>m[1][1]&&m[0][0]>m[2][2]){s=Math.sqrt(1+m[0][0]-m[1][1]-m[2][2])*2;return[(m[2][1]-m[1][2])/s,s/4,(m[0][1]+m[1][0])/s,(m[0][2]+m[2][0])/s];}
+    if(m[1][1]>m[2][2]){s=Math.sqrt(1+m[1][1]-m[0][0]-m[2][2])*2;return[(m[0][2]-m[2][0])/s,(m[0][1]+m[1][0])/s,s/4,(m[1][2]+m[2][1])/s];}
+    s=Math.sqrt(1+m[2][2]-m[0][0]-m[1][1])*2;return[(m[1][0]-m[0][1])/s,(m[0][2]+m[2][0])/s,(m[1][2]+m[2][1])/s,s/4];};
+  const slerp=(a,b,t)=>{let d=dot(a.slice(1),b.slice(1))+a[0]*b[0];if(d<0){b=b.map(v=>-v);d=-d;}if(d>.9995)return norm4(a.map((v,i)=>v+(b[i]-v)*t));const th=Math.acos(d),s=Math.sin(th);return a.map((v,i)=>(v*Math.sin((1-t)*th)+b[i]*Math.sin(t*th))/s);};
+  const norm4=q=>{const l=Math.hypot(...q);return q.map(v=>v/l);};
+  // pose de descanso: a face sorteada de frente, com o número em pé e uma leve inclinação pra mostrar o volume
+  const TILT=qmul(qaxis([0,1,0],-.3),qaxis([1,0,0],.34));
+  const rest=num=>{const f=F.find(o=>o.num===num);return qmul(TILT,matq([cross(f.up,f.n),f.up,f.n]));};
+  const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),mix=(a,b,t)=>`rgb(${a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(",")})`;
+  const TONE={"":[hex("#f08fc4"),hex("#f7d98f")],crit:[hex("#e9b949"),hex("#fffaf0")],fail:[hex("#c4375a"),hex("#ffb3c4")]},LIGHT=norm([-.45,.6,.66]);
+  const still=()=>matchMedia("(prefers-reduced-motion:reduce)").matches;
+  function draw(cv,q,tone,grow){
+    const g=cv.getContext("2d"),W=cv.width,S=W*.36*(grow||1),m=qmat(q),[dark,lit]=TONE[tone]||TONE[""];
+    const rot=v=>m.map(r=>dot(r,v)),pr=p=>[W/2+p[0]*S*(1+p[2]*.12),W/2-p[1]*S*(1+p[2]*.12)];
+    g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,W);g.lineJoin="round";g.lineWidth=W*.02;g.strokeStyle=INK;
+    const front=F.map(f=>({f,n:rot(f.n)})).filter(o=>o.n[2]>.01);
+    front.forEach(({f,n})=>{g.beginPath();f.v.forEach((i,k)=>g[k?"lineTo":"moveTo"](...pr(rot(V[i]))));g.closePath();g.fillStyle=mix(dark,lit,.25+.75*Math.max(0,dot(n,LIGHT)));g.fill();g.stroke();});
+    // número desenhado no plano da face (só nas faces bem viradas pra frente)
+    g.fillStyle=INK;g.textAlign="center";g.textBaseline="middle";g.font='700 100px "Patrick Hand",cursive';
+    front.forEach(({f,n})=>{if(n[2]<.3)return;const u=rot(f.up),x=cross(u,n),c=pr(rot(f.c)),k=S*.46/100;
+      g.globalAlpha=Math.min(1,(n[2]-.3)/.35);g.setTransform(x[0]*k,-x[1]*k,-u[0]*k,u[1]*k,c[0],c[1]);g.fillText(f.num,0,8);if(f.num===6||f.num===9)g.fillRect(-20,50,40,8);});
+    g.globalAlpha=1;g.setTransform(1,0,0,1,0,0);
+  }
+  function idle(cv){const q0=cv._q,t0=performance.now(),tick=t=>{if(!cv.isConnected||cv._busy)return;cv._q=qmul(qaxis([0,1,0],.2*Math.sin((t-t0)/900)),qmul(qaxis([1,0,0],.07*Math.sin((t-t0)/1300)),q0));draw(cv,cv._q,"");requestAnimationFrame(tick);};requestAnimationFrame(tick);}
+  return{
+    mount(){document.querySelectorAll("canvas[data-face]").forEach(cv=>{if(cv._q)return;const px=Math.round(cv.getBoundingClientRect().width||132),d=Math.min(2,window.devicePixelRatio||1);cv.width=cv.height=Math.round(px*d);cv._q=rest(+cv.dataset.face);draw(cv,cv._q,cv.dataset.tone||"");if(cv.dataset.idle&&!still())idle(cv);});
+      if(document.fonts)document.fonts.ready.then(()=>document.querySelectorAll("canvas[data-face]").forEach(cv=>{if(cv._q&&!cv._busy)draw(cv,cv._q,cv.dataset.tone||"");}));},
+    // gira do jeito que está até parar na face sorteada: rodopio que desacelera + interpolação entre as duas poses.
+    // Se o navegador pausar a animação (aba em segundo plano, economia de bateria), o setTimeout encerra a rolagem mesmo assim.
+    roll(cv,num,done){if(!cv||!cv._q||still()){if(cv&&cv._q){cv._q=rest(num);draw(cv,cv._q,"");}done();return;}
+      cv._busy=true;let over=false;const q0=cv._q,q1=rest(num),ax=norm([.4+Math.random(),Math.random()-.5,.3*Math.random()]),T=1700,t0=performance.now();
+      const finish=()=>{if(over)return;over=true;cv._q=q1;draw(cv,q1,"");cv._busy=false;done();};
+      const tick=t=>{if(over)return;const p=Math.min(1,Math.max(0,(t-t0)/T)),e=1-Math.pow(1-p,3);cv._q=qmul(qaxis(ax,4*Math.PI*(1-e)),slerp(q0,q1,e));draw(cv,cv._q,"",1+.08*Math.sin(Math.PI*p));if(p<1)requestAnimationFrame(tick);else finish();};
+      requestAnimationFrame(tick);setTimeout(finish,T+400);}
+  };
+})();</script>
 </body>
 </html>
